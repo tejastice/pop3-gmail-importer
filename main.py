@@ -500,7 +500,7 @@ def process_account(account_num):
                         response = pop3.top(msg_num, 20)  # Get first 20 lines for headers
                         email_data = b'\n'.join(response[1])
                         msg = message_from_bytes(email_data)
-                        date_str = msg.get('Date')
+                        date_str = str(msg.get('Date', ''))
                         if date_str:
                             try:
                                 date_obj = parsedate_to_datetime(date_str)
@@ -537,8 +537,8 @@ def process_account(account_num):
 
                 # Parse for logging
                 msg = message_from_bytes(raw_email)
-                subject = msg.get('Subject', '(no subject)')[:50]
-                from_addr = msg.get('From', '(unknown)')
+                subject = str(msg.get('Subject', '(no subject)'))[:50]
+                from_addr = str(msg.get('From', '(unknown)'))
 
                 logging.info(f"Account {account_num}: Processing message {msg_num}: From={mask_email(from_addr)}, Subject={subject}")
 
@@ -576,7 +576,9 @@ def process_account(account_num):
                 processed_count += 1
 
             except Exception as e:
+                import traceback
                 logging.error(f"Account {account_num}: Error processing message {msg_num}: {e}")
+                logging.error(f"Account {account_num}: Traceback:\n{traceback.format_exc()}")
                 continue
 
         # Commit deletions
