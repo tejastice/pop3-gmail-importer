@@ -18,6 +18,9 @@ import signal
 import logging
 import poplib
 import hashlib
+
+# Increase POP3 max line length (default 2048 is too small for HTML emails)
+poplib._MAXLINE = 1024 * 1024  # 1MB
 import threading
 from datetime import datetime, timedelta
 from email import message_from_bytes
@@ -575,6 +578,16 @@ def process_account(account_num):
 
                 processed_count += 1
 
+            except poplib.error_proto as e:
+                logging.error(f"Account {account_num}: POP3 protocol error on message {msg_num}: {e}")
+                logging.warning(f"Account {account_num}: Connection corrupted, will retry in next cycle")
+                try:
+                    pop3.quit()
+                except Exception:
+                    pass
+                pop3 = None
+                break
+
             except Exception as e:
                 import traceback
                 logging.error(f"Account {account_num}: Error processing message {msg_num}: {e}")
@@ -582,7 +595,8 @@ def process_account(account_num):
                 continue
 
         # Commit deletions
-        pop3.quit()
+        if pop3 is not None:
+            pop3.quit()
         logging.info(f"Account {account_num}: POP3 session closed (processed: {processed_count})")
 
         # Cleanup old files
@@ -600,10 +614,11 @@ def process_account(account_num):
 
     except Exception as e:
         logging.error(f"Account {account_num}: Unexpected error: {e}")
-        try:
-            pop3.quit()
-        except:
-            pass
+        if pop3 is not None:
+            try:
+                pop3.quit()
+            except Exception:
+                pass
 
 
 def main():

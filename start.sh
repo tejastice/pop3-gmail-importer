@@ -32,10 +32,13 @@ if [ ! -f "credentials.json" ]; then
     echo ""
 fi
 
+# Mac用の仮想環境ディレクトリ
+VENV_DIR="venv_mac"
+
 # Check if virtual environment exists
-if [ ! -d "venv" ]; then
-    echo -e "${YELLOW}Virtual environment not found. Creating...${NC}"
-    python3 -m venv venv
+if [ ! -d "$VENV_DIR" ]; then
+    echo -e "${YELLOW}Virtual environment not found. Creating $VENV_DIR ...${NC}"
+    python3 -m venv "$VENV_DIR"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to create virtual environment${NC}"
         exit 1
@@ -45,17 +48,17 @@ fi
 
 # Activate virtual environment
 echo "Activating virtual environment..."
-source venv/bin/activate
+source "$VENV_DIR/bin/activate"
 
 # Check if requirements are installed
-if [ ! -f "venv/.requirements_installed" ]; then
+if [ ! -f "$VENV_DIR/.requirements_installed" ]; then
     echo "Installing dependencies..."
     pip install -r requirements.txt
     if [ $? -ne 0 ]; then
         echo -e "${RED}Failed to install dependencies${NC}"
         exit 1
     fi
-    touch venv/.requirements_installed
+    touch "$VENV_DIR/.requirements_installed"
     echo -e "${GREEN}Dependencies installed${NC}"
 fi
 
